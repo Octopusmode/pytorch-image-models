@@ -100,6 +100,7 @@ def validate(model, testloader, criterion):
     # loss and accuracy for the complete epoch
     epoch_loss = valid_running_loss / counter
     epoch_acc = 100. * (valid_running_correct / len(testloader.dataset))
+    save_model(epochs, model, optimizer, criterion)
     return epoch_loss, epoch_acc
 
 

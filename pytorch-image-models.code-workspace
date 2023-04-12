@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../yolo4scaled/darknet/parser/datasets/COCO2017/person_class"
+		}
+	],
+	"settings": {}
+}

@@ -6,12 +6,14 @@ import time
 from tqdm.auto import tqdm
 from datasets import train_loader, valid_loader
 from utils import save_model, save_plots
+import logging
 import timm
 
+logging.basicConfig(level=logging.DEBUG)
 
 # construct the argument parser
 parser = argparse.ArgumentParser()
-parser.add_argument('-e', '--epochs', type=int, default=20,
+parser.add_argument('-e', '--epochs', type=int, default=100,
     help='number of epochs to train our network for')
 args = vars(parser.parse_args())
 
@@ -23,8 +25,10 @@ epochs = args['epochs']
 device = 'cpu'
 print(f"Computation device: {device}\n")
 
+model_name='mobilenetv3_large_100.ra_in1k'
+model_desk='mbnet3'
 
-model = timm.create_model('mobilenetv3_large_100.ra_in1k', pretrained=True, num_classes = 2)
+model = timm.create_model(model_name, pretrained=True, num_classes = 2)
 model.requires_grad_(True)
 model = model.to(device)
 print(model)
@@ -45,7 +49,7 @@ criterion = nn.CrossEntropyLoss()
 # training
 def train(model, trainloader, optimizer, criterion):
     model.train()
-    print('Training')
+    logging.info('Training')
     train_running_loss = 0.0
     train_running_correct = 0
     counter = 0
@@ -77,7 +81,7 @@ def train(model, trainloader, optimizer, criterion):
 # validation
 def validate(model, testloader, criterion):
     model.eval()
-    print('Validation')
+    logging.info('Validation')
     valid_running_loss = 0.0
     valid_running_correct = 0
     counter = 0
@@ -100,7 +104,6 @@ def validate(model, testloader, criterion):
     # loss and accuracy for the complete epoch
     epoch_loss = valid_running_loss / counter
     epoch_acc = 100. * (valid_running_correct / len(testloader.dataset))
-    save_model(epochs, model, optimizer, criterion)
     return epoch_loss, epoch_acc
 
 
@@ -109,22 +112,30 @@ train_loss, valid_loss = [], []
 train_acc, valid_acc = [], []
 # start the training
 for epoch in range(epochs):
-    print(f"[INFO]: Epoch {epoch+1} of {epochs}")
+    logging.info(f"[INFO]: Epoch {epoch+1} of {epochs}")
     train_epoch_loss, train_epoch_acc = train(model, train_loader, 
                                               optimizer, criterion)
+    # train_epoch_loss, train_epoch_acc = train(model, valid_loader, 
+    #                                           optimizer, criterion)
     valid_epoch_loss, valid_epoch_acc = validate(model, valid_loader,  
                                                  criterion)
+    
+    name = f'{model_desk}_acc{valid_epoch_acc:3f}_loss{train_epoch_loss:3f}'
+    
+    # Save checkpoint
+    save_model(epochs, model, optimizer, criterion, name)
+    
     train_loss.append(train_epoch_loss)
     valid_loss.append(valid_epoch_loss)
     train_acc.append(train_epoch_acc)
     valid_acc.append(valid_epoch_acc)
-    print(f"Training loss: {train_epoch_loss:.3f}, training acc: {train_epoch_acc:.3f}")
-    print(f"Validation loss: {valid_epoch_loss:.3f}, validation acc: {valid_epoch_acc:.3f}")
-    print('-'*50)
+    logging.info(f"Training loss: {train_epoch_loss:.3f}, training acc: {train_epoch_acc:.3f}")
+    logging.info(f"Validation loss: {valid_epoch_loss:.3f}, validation acc: {valid_epoch_acc:.3f}")
+    logging.info('-'*50)
     time.sleep(5)
     
 # save the trained model weights
-save_model(epochs, model, optimizer, criterion)
+save_model(epochs, model, optimizer, criterion, name=f'{model_desk}_final')
 # save the loss and accuracy plots
 save_plots(train_acc, valid_acc, train_loss, valid_loss)
-print('TRAINING COMPLETE')
+logging.info('TRAINING COMPLETE')

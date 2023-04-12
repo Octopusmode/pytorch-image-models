@@ -2,13 +2,12 @@ import torch
 import cv2
 import torchvision.transforms as transforms
 import argparse
-from model import CNNMOdel
 import timm
 
 # construct the argument parser
 parser = argparse.ArgumentParser()
 parser.add_argument('-i', '--input', 
-    default='input/butterflies_rev2/test/adonis/1.jpg',
+    default='training/test.jpg',
     help='path to the input image')
 args = vars(parser.parse_args())
 
